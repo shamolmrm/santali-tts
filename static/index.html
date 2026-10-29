@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Santali TTS - Recording Studio</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Segoe UI', sans-serif;
+  background:#0f172a; color:#e2e8f0;
+  min-height:100vh; display:flex;
+  flex-direction:column; align-items:center; padding:20px;
+}
+.header { text-align:center; margin-bottom:20px; padding-top:20px; }
+.header h1 { font-size:26px; color:#38bdf8; margin-bottom:4px; }
+.header p  { color:#94a3b8; font-size:14px; }
+
+.nav { display:flex; gap:10px; margin-bottom:20px; }
+.nav a {
+  padding:8px 20px; border-radius:10px; font-size:13px; font-weight:600;
+  text-decoration:none; border:1px solid #334155; color:#94a3b8; transition:all 0.2s;
+}
+.nav a.active { background:#1e3a5f; color:#38bdf8; border-color:#38bdf8; }
+
+/* Script toggle */
+.script-toggle {
+  display:flex; background:#1e293b; border-radius:14px;
+  padding:4px; gap:4px; margin-bottom:20px; border:1px solid #334155;
+}
+.script-btn {
+  flex:1; padding:10px 24px; border-radius:10px; border:none;
+  font-size:14px; font-weight:700; cursor:pointer; transition:all 0.2s;
+  background:transparent; color:#64748b;
+}
+.script-btn.active { background:#38bdf8; color:#0f172a; }
+.script-btn:hover:not(.active) { color:#e2e8f0; }
+
+/* Speaker tabs */
+.section-label { font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; width:100%; max-width:640px; }
+.speaker-tabs  { display:flex; gap:10px; flex-wrap:wrap; width:100%; max-width:640px; margin-bottom:20px; }
+.speaker-tab {
+  flex:1; min-width:110px; padding:14px;
+  background:#1e293b; border:2px solid #334155;
+  border-radius:14px; cursor:pointer; text-align:center; transition:all 0.2s;
+}
+.speaker-tab:hover  { border-color:#475569; }
+.speaker-tab.active { border-color:#38bdf8; background:#1e3a5f; }
+.speaker-tab .icon  { font-size:26px; margin-bottom:6px; }
+.speaker-tab .name  { font-size:13px; font-weight:600; color:#e2e8f0; }
+.speaker-tab .count { font-size:11px; color:#64748b; margin-top:2px; }
+
+/* Progress */
+.progress-wrap { width:100%; max-width:640px; background:#1e293b; border-radius:10px; height:10px; margin-bottom:6px; overflow:hidden; }
+.progress-bar  { height:100%; background:linear-gradient(90deg,#38bdf8,#818cf8); border-radius:10px; transition:width 0.4s; }
+.progress-text { text-align:center; color:#94a3b8; font-size:13px; margin-bottom:18px; }
+
+/* Card */
+.card {
+  background:#1e293b; border-radius:20px; padding:30px;
+  width:100%; max-width:640px; border:1px solid #334155; margin-bottom:16px;
+}
+.sentence-meta { font-size:12px; color:#38bdf8; margin-bottom:8px; }
+.sentence-text {
+  font-size:26px; color:#f1f5f9; line-height:1.6;
+  margin-bottom:26px; min-height:70px;
+}
+.sentence-text.olchiki { font-family:'Noto Sans Ol Chiki', 'Segoe UI', sans-serif; font-size:28px; }
+
+.controls { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+.btn {
+  padding:12px 22px; border-radius:12px; border:none;
+  font-size:15px; font-weight:600; cursor:pointer;
+  transition:all 0.2s; display:flex; align-items:center; gap:6px;
+}
+.btn:hover   { transform:translateY(-2px); }
+.btn:active  { transform:scale(0.97); }
+.btn:disabled{ opacity:0.35; cursor:not-allowed; transform:none; }
+.btn-record { background:linear-gradient(135deg,#ef4444,#dc2626); color:white; min-width:145px; justify-content:center; }
+.btn-record.recording { background:linear-gradient(135deg,#f97316,#ea580c); animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4)} 50%{box-shadow:0 0 0 10px rgba(239,68,68,0)} }
+.btn-play { background:#1d4ed8; color:white; }
+.btn-save { background:linear-gradient(135deg,#22c55e,#16a34a); color:white; }
+.btn-nav  { background:#334155; color:#e2e8f0; }
+
+.status { margin-top:16px; padding:12px 18px; border-radius:10px; font-size:14px; text-align:center; display:none; }
+.status.success { background:#14532d; color:#86efac; display:block; }
+.status.error   { background:#450a0a; color:#fca5a5; display:block; }
+.status.info    { background:#0c1a3a; color:#93c5fd; display:block; }
+
+audio { width:100%; margin-top:14px; border-radius:8px; }
+
+.list-card {
+  background:#1e293b; border-radius:16px; padding:18px;
+  width:100%; max-width:640px; border:1px solid #334155;
+  max-height:260px; overflow-y:auto;
+}
+.list-card h3 { font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+.list-item {
+  display:flex; align-items:center; gap:8px;
+  padding:9px 10px; border-radius:9px; cursor:pointer;
+  transition:background 0.15s; margin-bottom:3px;
+}
+.list-item:hover  { background:#334155; }
+.list-item.active { background:#1e3a5f; border:1px solid #38bdf8; }
+.dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.dot-done    { background:#22c55e; }
+.dot-pending { background:#475569; }
+.item-num  { font-size:11px; color:#64748b; width:26px; flex-shrink:0; }
+.item-text { font-size:13px; color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tip { font-size:12px; color:#4b5563; text-align:center; margin-top:10px; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ol+Chiki&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="header">
+  <h1>🎙️ Santali TTS — Recording Studio</h1>
+  <p>Record sentences clearly for voice training</p>
+</div>
+
+<div class="nav">
+  <a href="/" class="active">🎙️ Recording Studio</a>
+  <a href="/tts">🔊 TTS App</a>
+</div>
+
+<!-- Script toggle -->
+<div class="script-toggle">
+  <button class="script-btn active" id="btnLatin"   onclick="switchScript('latin')">🔤 Latin Script</button>
+  <button class="script-btn"        id="btnOlchiki" onclick="switchScript('olchiki')">ᱚᱞ Ol Chiki</button>
+</div>
+
+<!-- Speaker tabs -->
+<div class="section-label">Select Speaker</div>
+<div class="speaker-tabs" id="speakerTabs"></div>
+
+<!-- Progress -->
+<div class="progress-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+<p class="progress-text" id="progressText">Loading...</p>
+
+<!-- Sentence card -->
+<div class="card">
+  <div class="sentence-meta" id="sentenceMeta">#1</div>
+  <div class="sentence-text" id="sentenceText">Loading...</div>
+  <div class="controls">
+    <button class="btn btn-nav"    onclick="prevSentence()">⬅ Prev</button>
+    <button class="btn btn-record" id="btnRecord" onclick="toggleRecord()">🎤 Record</button>
+    <button class="btn btn-play"   id="btnPlay"   onclick="playAudio()"     disabled>▶ Play</button>
+    <button class="btn btn-save"   id="btnSave"   onclick="saveRecording()" disabled>✅ Save</button>
+    <button class="btn btn-nav"    onclick="nextSentence()">Next ➡</button>
+  </div>
+  <audio id="audioPlayer" controls style="display:none"></audio>
+  <div class="status" id="status"></div>
+</div>
+
+<!-- Sentence list -->
+<div class="list-card">
+  <h3>All Sentences</h3>
+  <div id="listContainer"></div>
+</div>
+<p class="tip">Space = Record/Stop &nbsp;|&nbsp; Enter = Save &nbsp;|&nbsp; ← → = Navigate</p>
+
+<script>
+let sentences = [], recordedIndices = [], currentIndex = 0;
+let currentSpeaker = 'male', currentScript = 'latin', speakers = [];
+let mediaRecorder = null, audioChunks = [], audioBlob = null, isRecording = false;
+
+async function loadData() {
+  const res  = await fetch(`/api/sentences?speaker=${currentSpeaker}&script=${currentScript}`);
+  const data = await res.json();
+  sentences       = data.sentences;
+  recordedIndices = data.recorded_indices;
+  speakers        = data.speakers;
+  renderSpeakerTabs();
+  updateProgress(data.recorded, data.total);
+  renderList();
+  showSentence(currentIndex);
+}
+
+function switchScript(script) {
+  currentScript = script;
+  currentIndex  = 0;
+  audioBlob     = null;
+  document.getElementById('btnLatin').classList.toggle('active',   script === 'latin');
+  document.getElementById('btnOlchiki').classList.toggle('active', script === 'olchiki');
+  loadData();
+}
+
+function renderSpeakerTabs() {
+  const c = document.getElementById('speakerTabs');
+  c.innerHTML = '';
+  speakers.forEach(sp => {
+    const div = document.createElement('div');
+    div.className = 'speaker-tab' + (sp.id === currentSpeaker ? ' active' : '');
+    div.innerHTML = `<div class="icon">${sp.icon}</div>
+                     <div class="name">${sp.label}</div>
+                     <div class="count" id="cnt_${sp.id}">...</div>`;
+    div.onclick = () => { currentSpeaker = sp.id; currentIndex = 0; audioBlob = null; loadData(); };
+    c.appendChild(div);
+  });
+  fetchCounts();
+}
+
+async function fetchCounts() {
+  try {
+    const res  = await fetch(`/api/speakers?script=${currentScript}`);
+    const data = await res.json();
+    data.forEach(sp => {
+      const el = document.getElementById(`cnt_${sp.id}`);
+      if (el) el.textContent = `${sp.recorded}/${sp.total}`;
+    });
+  } catch {}
+}
+
+function updateProgress(done, total) {
+  const pct = total > 0 ? Math.round((done/total)*100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${done} of ${total} recorded (${pct}%)`;
+}
+
+function showSentence(idx) {
+  currentIndex = idx;
+  audioBlob = null; audioChunks = [];
+  document.getElementById('sentenceMeta').textContent = `#${idx+1} of ${sentences.length}`;
+  const el = document.getElementById('sentenceText');
+  el.textContent = sentences[idx] || '';
+  el.className   = currentScript === 'olchiki' ? 'sentence-text olchiki' : 'sentence-text';
+  document.getElementById('btnSave').disabled = true;
+  document.getElementById('btnPlay').disabled = true;
+  document.getElementById('audioPlayer').style.display = 'none';
+  const done = recordedIndices.includes(idx);
+  const st   = document.getElementById('status');
+  if (done) { st.className='status success'; st.textContent='✅ Already recorded! Re-record or move on.'; }
+  else       { st.className='status'; st.textContent=''; }
+  document.querySelectorAll('.list-item').forEach((el,i) => el.classList.toggle('active', i===idx));
+  document.querySelector('.list-item.active')?.scrollIntoView({block:'nearest'});
+}
+
+function renderList() {
+  const c = document.getElementById('listContainer');
+  c.innerHTML = '';
+  sentences.forEach((text, i) => {
+    const done = recordedIndices.includes(i);
+    const div  = document.createElement('div');
+    div.className = 'list-item' + (i===currentIndex ? ' active' : '');
+    div.innerHTML = `<span class="item-num">${i+1}</span>
+                     <span class="dot ${done?'dot-done':'dot-pending'}"></span>
+                     <span class="item-text">${text}</span>`;
+    div.onclick = () => showSentence(i);
+    c.appendChild(div);
+  });
+}
+
+function nextSentence() { if (currentIndex < sentences.length-1) { showSentence(currentIndex+1); renderList(); } }
+function prevSentence() { if (currentIndex > 0) { showSentence(currentIndex-1); renderList(); } }
+
+async function toggleRecord() {
+  if (isRecording) {
+    mediaRecorder.stop(); isRecording = false;
+    document.getElementById('btnRecord').textContent = '🎤 Record';
+    document.getElementById('btnRecord').classList.remove('recording');
+  } else {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+      audioChunks  = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        audioBlob = new Blob(audioChunks, {type:'audio/webm'});
+        const pl  = document.getElementById('audioPlayer');
+        pl.src    = URL.createObjectURL(audioBlob);
+        pl.style.display = 'block';
+        document.getElementById('btnPlay').disabled = false;
+        document.getElementById('btnSave').disabled = false;
+        stream.getTracks().forEach(t => t.stop());
+      };
+      mediaRecorder.start(); isRecording = true;
+      document.getElementById('btnRecord').textContent = '⏹ Stop';
+      document.getElementById('btnRecord').classList.add('recording');
+      setStatus('🔴 Recording... speak clearly then press Stop.', 'info');
+    } catch { setStatus('❌ Microphone access denied.', 'error'); }
+  }
+}
+
+function playAudio() { document.getElementById('audioPlayer').play(); }
+
+async function saveRecording() {
+  if (!audioBlob) return;
+  document.getElementById('btnSave').disabled = true;
+  setStatus('⏳ Saving to Google Drive...', 'info');
+  const fd = new FormData();
+  fd.append('speaker', currentSpeaker);
+  fd.append('script',  currentScript);
+  fd.append('index',   currentIndex);
+  fd.append('audio',   audioBlob, 'audio.webm');
+  try {
+    const res  = await fetch('/api/save', {method:'POST', body:fd});
+    const data = await res.json();
+    if (data.success) {
+      if (!recordedIndices.includes(currentIndex)) recordedIndices.push(currentIndex);
+      setStatus(`✅ Saved! ${data.progress}`, 'success');
+      const [done,total] = data.progress.split('/').map(Number);
+      updateProgress(done, total); renderList(); fetchCounts();
+      setTimeout(() => { if (currentIndex < sentences.length-1) nextSentence(); }, 1500);
+    }
+  } catch { setStatus('❌ Save failed.', 'error'); document.getElementById('btnSave').disabled=false; }
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg; el.className = `status ${type}`;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code==='Space' && e.target.tagName!=='BUTTON') { e.preventDefault(); toggleRecord(); }
+  if (e.code==='ArrowRight') nextSentence();
+  if (e.code==='ArrowLeft')  prevSentence();
+  if (e.code==='Enter' && !document.getElementById('btnSave').disabled) saveRecording();
+});
+
+loadData();
+</script>
+</body>
+</html>

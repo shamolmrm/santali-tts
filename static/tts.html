@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Santali Text to Speech</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Segoe UI', sans-serif;
+  background:#0f172a; color:#e2e8f0;
+  min-height:100vh; display:flex;
+  flex-direction:column; align-items:center; padding:20px;
+}
+.header { text-align:center; margin-bottom:20px; padding-top:24px; }
+.header h1 { font-size:28px; color:#38bdf8; margin-bottom:6px; }
+.header p  { color:#94a3b8; font-size:15px; }
+
+.nav { display:flex; gap:10px; margin-bottom:20px; }
+.nav a {
+  padding:8px 20px; border-radius:10px; font-size:13px; font-weight:600;
+  text-decoration:none; border:1px solid #334155; color:#94a3b8; transition:all 0.2s;
+}
+.nav a.active { background:#1e3a5f; color:#38bdf8; border-color:#38bdf8; }
+
+/* Script toggle */
+.script-toggle {
+  display:flex; background:#1e293b; border-radius:14px;
+  padding:4px; gap:4px; margin-bottom:24px; border:1px solid #334155;
+}
+.script-btn {
+  flex:1; padding:10px 28px; border-radius:10px; border:none;
+  font-size:14px; font-weight:700; cursor:pointer; transition:all 0.2s;
+  background:transparent; color:#64748b;
+}
+.script-btn.active { background:#38bdf8; color:#0f172a; }
+.script-btn:hover:not(.active) { color:#e2e8f0; }
+
+/* Card */
+.card {
+  background:#1e293b; border-radius:20px; padding:30px;
+  width:100%; max-width:640px; border:1px solid #334155; margin-bottom:20px;
+}
+.card-label { font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+
+textarea {
+  width:100%; background:#0f172a; border:1px solid #334155;
+  border-radius:14px; padding:16px; font-size:18px; color:#f1f5f9;
+  resize:vertical; min-height:120px; outline:none; transition:border 0.2s;
+  font-family:'Segoe UI', sans-serif;
+}
+textarea.olchiki { font-family:'Noto Sans Ol Chiki', 'Segoe UI', sans-serif; font-size:22px; }
+textarea:focus { border-color:#38bdf8; }
+textarea::placeholder { color:#475569; }
+
+/* Voice grid */
+.voice-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:18px 0; }
+.voice-card {
+  background:#0f172a; border:2px solid #334155;
+  border-radius:14px; padding:16px; text-align:center;
+  cursor:pointer; transition:all 0.2s;
+}
+.voice-card:hover  { border-color:#475569; transform:translateY(-2px); }
+.voice-card.active { border-color:#38bdf8; background:#1e3a5f; }
+.voice-card .icon  { font-size:30px; margin-bottom:7px; }
+.voice-card .name  { font-size:13px; font-weight:600; color:#e2e8f0; }
+.badge {
+  display:inline-block; margin-top:5px; padding:2px 10px;
+  border-radius:20px; font-size:11px; font-weight:600;
+}
+.badge-ready   { background:#14532d; color:#86efac; }
+.badge-pending { background:#1e293b; color:#64748b; }
+
+/* Buttons */
+.btn-generate {
+  width:100%; padding:15px; background:linear-gradient(135deg,#38bdf8,#818cf8);
+  color:white; border:none; border-radius:14px;
+  font-size:17px; font-weight:700; cursor:pointer; transition:all 0.2s; margin-bottom:12px;
+}
+.btn-generate:hover    { transform:translateY(-2px); box-shadow:0 8px 25px rgba(56,189,248,0.3); }
+.btn-generate:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+.btn-download {
+  width:100%; padding:12px; background:#1e293b;
+  color:#94a3b8; border:1px solid #334155; border-radius:12px;
+  font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; display:none;
+}
+.btn-download:hover { background:#334155; color:#e2e8f0; }
+
+.audio-section { background:#0f172a; border-radius:14px; padding:18px; margin-top:14px; display:none; }
+.audio-section h3 { font-size:12px; color:#64748b; margin-bottom:10px; }
+audio { width:100%; border-radius:8px; }
+
+.status { padding:12px 18px; border-radius:10px; font-size:14px; text-align:center; margin-top:12px; display:none; }
+.status.info    { background:#0c1a3a; color:#93c5fd; display:block; }
+.status.success { background:#14532d; color:#86efac; display:block; }
+.status.error   { background:#450a0a; color:#fca5a5; display:block; }
+
+/* Examples */
+.examples { width:100%; max-width:640px; }
+.examples h3 { font-size:12px; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+.chip-list { display:flex; flex-wrap:wrap; gap:8px; }
+.chip {
+  padding:7px 14px; background:#1e293b; border:1px solid #334155;
+  border-radius:20px; font-size:13px; color:#94a3b8;
+  cursor:pointer; transition:all 0.2s;
+}
+.chip:hover { background:#334155; color:#e2e8f0; }
+.chip.olchiki { font-family:'Noto Sans Ol Chiki', 'Segoe UI', sans-serif; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Ol+Chiki&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="header">
+  <h1>🔊 Santali Text to Speech</h1>
+  <p>Type Santali text, choose a voice, and listen</p>
+</div>
+
+<div class="nav">
+  <a href="/">🎙️ Recording Studio</a>
+  <a href="/tts" class="active">🔊 TTS App</a>
+</div>
+
+<!-- Script toggle -->
+<div class="script-toggle">
+  <button class="script-btn active" id="btnLatin"   onclick="switchScript('latin')">🔤 Latin Script</button>
+  <button class="script-btn"        id="btnOlchiki" onclick="switchScript('olchiki')">ᱚᱞ Ol Chiki</button>
+</div>
+
+<!-- Main card -->
+<div class="card">
+  <div class="card-label">Type Santali text:</div>
+  <textarea id="textInput" placeholder="Johar, am do gethen?"></textarea>
+
+  <div style="margin-top:18px;">
+    <div class="card-label">Select a voice:</div>
+    <div class="voice-grid" id="voiceGrid">
+      <div class="voice-card active" data-id="male">
+        <div class="icon">👨</div>
+        <div class="name">Male</div>
+        <div class="badge badge-pending" id="badge_male">...</div>
+      </div>
+      <div class="voice-card" data-id="female">
+        <div class="icon">👩</div>
+        <div class="name">Female</div>
+        <div class="badge badge-pending" id="badge_female">...</div>
+      </div>
+      <div class="voice-card" data-id="elder">
+        <div class="icon">🧓</div>
+        <div class="name">Elder</div>
+        <div class="badge badge-pending" id="badge_elder">...</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-generate" id="btnGenerate" onclick="generateSpeech()">🔊 Generate Speech</button>
+
+  <div class="audio-section" id="audioSection">
+    <h3>Generated audio:</h3>
+    <audio id="audioPlayer" controls style="width:100%"></audio>
+    <button class="btn-download" id="btnDownload" onclick="downloadAudio()">⬇ Download MP3</button>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+
+<!-- Examples -->
+<div class="examples">
+  <h3>Examples:</h3>
+  <div class="chip-list" id="chipList"></div>
+</div>
+
+<script>
+let currentScript  = 'latin';
+let selectedSpeaker = 'male';
+let currentAudioUrl = null;
+
+const EXAMPLES = {
+  latin:   ['Johar, am do gethen?', 'Ing do majhi hozom kana.', 'Nit do bazar chalag kana.', 'Am do kahan chalag eda?', 'Ing do school chalag kana.'],
+  olchiki: ['ᱡᱚᱦᱟᱨ, ᱟᱢ ᱫᱚ ᱜᱮᱛᱷᱮᱱ?', 'ᱤᱝ ᱫᱚ ᱢᱟᱡᱷᱤ ᱦᱚᱡᱚᱢ ᱠᱟᱱᱟ।', 'ᱱᱤᱛ ᱫᱚ ᱵᱟᱡᱟᱨ ᱪᱟᱞᱟᱜ ᱠᱟᱱᱟ।', 'ᱤᱝ ᱫᱚ ᱤᱥᱠᱩᱞ ᱪᱟᱞᱟᱜ ᱠᱟᱱᱟ।'],
+};
+
+function switchScript(script) {
+  currentScript = script;
+  document.getElementById('btnLatin').classList.toggle('active',   script==='latin');
+  document.getElementById('btnOlchiki').classList.toggle('active', script==='olchiki');
+  const ta = document.getElementById('textInput');
+  ta.className   = script==='olchiki' ? 'olchiki' : '';
+  ta.placeholder = script==='olchiki' ? 'ᱡᱚᱦᱟᱨ, ᱟᱢ ᱫᱚ ᱜᱮᱛᱷᱮᱱ?' : 'Johar, am do gethen?';
+  ta.value = '';
+  renderExamples();
+  loadSpeakers();
+}
+
+function renderExamples() {
+  const c    = document.getElementById('chipList');
+  c.innerHTML = '';
+  EXAMPLES[currentScript].forEach(text => {
+    const div = document.createElement('div');
+    div.className = 'chip' + (currentScript==='olchiki' ? ' olchiki' : '');
+    div.textContent = text;
+    div.onclick     = () => { document.getElementById('textInput').value = text; };
+    c.appendChild(div);
+  });
+}
+
+// Voice card selection
+document.querySelectorAll('.voice-card').forEach(card => {
+  card.addEventListener('click', function() {
+    document.querySelectorAll('.voice-card').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+    selectedSpeaker = this.dataset.id;
+  });
+});
+
+async function loadSpeakers() {
+  try {
+    const res  = await fetch(`/api/speakers?script=${currentScript}`);
+    const data = await res.json();
+    data.forEach(sp => {
+      const el = document.getElementById(`badge_${sp.id}`);
+      if (!el) return;
+      el.textContent = sp.ready ? `${sp.recorded} recordings ✓` : `${sp.recorded}/${sp.total} recorded`;
+      el.className   = `badge ${sp.ready ? 'badge-ready' : 'badge-pending'}`;
+    });
+  } catch {}
+}
+
+async function generateSpeech() {
+  const text = document.getElementById('textInput').value.trim();
+  if (!text) { setStatus('Please type some Santali text first.', 'error'); return; }
+
+  const btn = document.getElementById('btnGenerate');
+  btn.disabled = true; btn.textContent = '⏳ Generating...';
+  setStatus('Generating speech...', 'info');
+
+  // Slow mode for elder voice
+  const slow = selectedSpeaker === 'elder';
+
+  try {
+    const res = await fetch('/api/generate', {
+      method:  'POST',
+      headers: {'Content-Type': 'application/json'},
+      body:    JSON.stringify({ text, slow, script: currentScript }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Generation failed');
+    }
+
+    const blob      = await res.blob();
+    currentAudioUrl = URL.createObjectURL(blob);
+
+    const player = document.getElementById('audioPlayer');
+
+    // Remove old src first so browser reloads
+    player.src = '';
+    player.load();
+    player.src = currentAudioUrl;
+
+    // Different playback speed per voice
+    const speeds = { male: 1.0, female: 1.1, elder: 0.85 };
+    player.playbackRate = speeds[selectedSpeaker] || 1.0;
+
+    document.getElementById('audioSection').style.display = 'block';
+
+    // Wait for audio to be ready then play
+    player.oncanplaythrough = () => {
+      player.play().catch(() => {
+        setStatus('✅ Audio ready — press ▶ to play.', 'success');
+      });
+    };
+    player.load();
+
+    setStatus('✅ Audio ready! Press ▶ play করো।', 'success');
+  } catch (err) {
+    setStatus(`❌ Error: ${err.message}`, 'error');
+  }
+  btn.disabled    = false;
+  btn.textContent = '🔊 Generate Speech';
+}
+
+function downloadAudio() {
+  if (!currentAudioUrl) return;
+  const a = document.createElement('a');
+  a.href     = currentAudioUrl;
+  a.download = `santali_${currentScript}_${selectedSpeaker}_${Date.now()}.webm`;
+  a.click();
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg; el.className = `status ${type}`;
+}
+
+renderExamples();
+loadSpeakers();
+</script>
+</body>
+</html>
